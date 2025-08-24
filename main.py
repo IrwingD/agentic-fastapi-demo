@@ -19,7 +19,7 @@ app = FastAPI()
 # --- Enable CORS for Lovable ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://*.lovable.dev"],  # allow Lovable sandbox domain
+    allow_origins=["https://1317128d-d404-412b-a6cc-3420c76dfb42.sandbox.lovable.dev"],  # allow Lovable sandbox domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
