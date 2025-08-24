@@ -1,22 +1,25 @@
 ﻿from fastapi import FastAPI
 from pydantic import BaseModel
-import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, END
-#from dotenv import load_dotenv
+from typing import TypedDict, Optional
+import logging
 
-#load_dotenv()
+# --- Setup logging ---
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+# --- Initialize LLM ---
 llm = ChatGoogleGenerativeAI(model='gemini-2.0-flash', temperature=0)
 
+# --- FastAPI app ---
 app = FastAPI()
 
-class Request(BaseModel):
+# --- Request body model ---
+class UserRequest(BaseModel):
     user_input: str
 
 # --- Define agent "state" ---
-from typing import TypedDict, Optional
-
 class AgentState(TypedDict, total=False):
     user_input: str
     intent: Optional[str]
@@ -50,6 +53,7 @@ def fetch_weather(state: AgentState):
     return state
 
 def normal_chat(state: AgentState):
+    """Fallback to normal assistant chat."""
     query = state["user_input"]
     response = llm.invoke([
         {"role": "system", "content": "You are a helpful assistant."},
@@ -65,7 +69,6 @@ workflow.add_node("classify", classify_intent)
 workflow.add_node("weather", fetch_weather)
 workflow.add_node("chat", normal_chat)
 
-# Edges
 workflow.set_entry_point("classify")
 workflow.add_conditional_edges(
     "classify",
@@ -79,6 +82,10 @@ agent_app = workflow.compile()
 
 # --- FastAPI endpoint ---
 @app.post("/agent")
-def agent_endpoint(req: Request):
-    final_state = agent_app.invoke({"user_input": req.user_input})
-    return {"response": final_state["response"]}
+def agent_endpoint(req: UserRequest):
+    try:
+        final_state = agent_app.invoke({"user_input": req.user_input})
+        return {"response": final_state["response"]}
+    except Exception as e:
+        logger.exception("Error while processing request")
+        return {"error": str(e)}
