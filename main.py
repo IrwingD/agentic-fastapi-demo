@@ -1,4 +1,5 @@
 ﻿from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, END
@@ -15,6 +16,15 @@ llm = ChatGoogleGenerativeAI(model='gemini-2.0-flash', temperature=0)
 # --- FastAPI app ---
 app = FastAPI()
 
+# --- Enable CORS for Lovable ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://*.lovable.dev"],  # allow Lovable sandbox domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # --- Request body model ---
 class UserRequest(BaseModel):
     user_input: str
@@ -27,7 +37,6 @@ class AgentState(TypedDict, total=False):
 
 # --- Define nodes ---
 def classify_intent(state: AgentState):
-    """Classify if query is about weather or normal chat."""
     query = state["user_input"]
     response = llm.invoke([
         {"role": "system", "content": "Classify if user wants 'weather' or 'chat'. Only respond with one word."},
@@ -37,7 +46,6 @@ def classify_intent(state: AgentState):
     return state
 
 def fetch_weather(state: AgentState):
-    """Toy weather lookup"""
     query = state["user_input"]
     response = llm.invoke([
         {"role": "system", "content": "Extract the city name from the query."},
@@ -53,7 +61,6 @@ def fetch_weather(state: AgentState):
     return state
 
 def normal_chat(state: AgentState):
-    """Fallback to normal assistant chat."""
     query = state["user_input"]
     response = llm.invoke([
         {"role": "system", "content": "You are a helpful assistant."},
@@ -64,11 +71,9 @@ def normal_chat(state: AgentState):
 
 # --- Build LangGraph ---
 workflow = StateGraph(AgentState)
-
 workflow.add_node("classify", classify_intent)
 workflow.add_node("weather", fetch_weather)
 workflow.add_node("chat", normal_chat)
-
 workflow.set_entry_point("classify")
 workflow.add_conditional_edges(
     "classify",
@@ -77,7 +82,6 @@ workflow.add_conditional_edges(
 )
 workflow.add_edge("weather", END)
 workflow.add_edge("chat", END)
-
 agent_app = workflow.compile()
 
 # --- FastAPI endpoint ---
