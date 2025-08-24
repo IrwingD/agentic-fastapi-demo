@@ -1,14 +1,20 @@
-﻿from fastapi import FastAPI
+﻿from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, Optional
 import logging
+import os
 
 # --- Setup logging ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# --- Load API key from environment ---
+API_KEY = os.getenv("AGENT_API_KEY")
+if not API_KEY:
+    raise RuntimeError("Environment variable AGENT_API_KEY not set")
 
 # --- Initialize LLM ---
 llm = ChatGoogleGenerativeAI(model='gemini-2.0-flash', temperature=0)
@@ -16,10 +22,10 @@ llm = ChatGoogleGenerativeAI(model='gemini-2.0-flash', temperature=0)
 # --- FastAPI app ---
 app = FastAPI()
 
-# --- Enable CORS for Lovable ---
+# --- Enable CORS only for Lovable frontend ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://1317128d-d404-412b-a6cc-3420c76dfb42.sandbox.lovable.dev"],  # allow Lovable sandbox domain
+    allow_origins=["https://1317128d-d404-412b-a6cc-3420c76dfb42.sandbox.lovable.dev"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -84,9 +90,11 @@ workflow.add_edge("weather", END)
 workflow.add_edge("chat", END)
 agent_app = workflow.compile()
 
-# --- FastAPI endpoint ---
+# --- Secure FastAPI endpoint ---
 @app.post("/agent")
-def agent_endpoint(req: UserRequest):
+def agent_endpoint(req: UserRequest, x_api_key: str = Header(...)):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized: invalid API key")
     try:
         final_state = agent_app.invoke({"user_input": req.user_input})
         return {"response": final_state["response"]}
