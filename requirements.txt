@@ -5,3 +5,9 @@ langchain
 langchain-google-genai
 google-generativeai
 pydantic>=1.10           # required by FastAPI
+pandas                   # for CSV reading
+pinecone-client          # for Pinecone vector DB
+PyPDF2                   # if you also want PDF support for policies
+tiktoken                 # for tokenization (needed by embeddings)
+numpy                     # for numerical operations
+scikit-learn             # optional, for similarity metrics
