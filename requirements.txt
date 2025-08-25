@@ -13,3 +13,4 @@ numpy                     # for numerical operations
 scikit-learn             # optional, for similarity metrics
 PyMuPDF
 tqdm
+google-genai
