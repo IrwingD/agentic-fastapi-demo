@@ -1,0 +1,6 @@
+employee_id,name,casual_leave,sick_leave,earned_leave
+101,Alice,5,3,10
+102,Bob,6,2,8
+103,Charlie,4,5,12
+104,Diana,3,4,15
+105,Evan,7,1,9
