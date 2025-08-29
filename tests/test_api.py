@@ -1,15 +1,16 @@
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
 
-AGENT_API_KEY = os.environ["AGENT_API_KEY"] 
+AGENT_API_KEY = os.environ["AGENT_API_KEY"]
 
 @pytest.mark.asyncio
 async def test_agent_endpoint():
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.post(
             "/agent",
             headers={"x-api-key": AGENT_API_KEY},
