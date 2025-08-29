@@ -33,6 +33,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+print("")
+
 # --- Request model ---
 class UserRequest(BaseModel):
     user_input: str
