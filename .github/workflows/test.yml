@@ -1,0 +1,31 @@
+name: Run Tests
+
+on:
+  pull_request:   # run on PRs into main
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:   # inject secrets as environment variables
+      AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+      PINECONE_CLOUD: ${{ secrets.PINECONE_CLOUD }}
+      PINECONE_REGION: ${{ secrets.PINECONE_REGION }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run pytest
+        run: pytest -v
