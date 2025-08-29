@@ -1,6 +1,9 @@
 import os
 import pytest
 from httpx import AsyncClient
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from main import app
 
 AGENT_API_KEY = os.environ["AGENT_API_KEY"]  # pulled from GitHub Actions secret
