@@ -15,3 +15,5 @@ PyMuPDF
 tqdm
 google-genai
 pytest
+pytest-asyncio
+httpx
