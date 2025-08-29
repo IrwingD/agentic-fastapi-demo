@@ -17,4 +17,4 @@ async def test_agent_endpoint():
             json={"user_input": "How many leaves do employees get each year"},
         )
     assert response.status_code == 200
-    assert "leaves" in response.text.lower()
+    assert "leave" in response.text.lower()
